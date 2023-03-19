@@ -428,8 +428,15 @@ def halfSort(L):
                     currentNode = currentNode.nextNode
                     smallerNodeCount += 1
             currentMidNode = currentMidNode.nextNode
-                
-                
-                
 
+def contieneSuma(L, n):
+    currentNode = L.head
+    while(currentNode != None):
+        currentNodeAux = currentNode
+        while(currentNodeAux != None):
+            if(currentNode.value + currentNodeAux.value == n):
+                return True
+            currentNodeAux = currentNodeAux.nextNode
+        currentNode = currentNode.nextNode
+    return False
 
