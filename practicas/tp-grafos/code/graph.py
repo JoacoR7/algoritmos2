@@ -2,11 +2,12 @@ import algo1
 import dictionary
 import linkedlist
 import myqueue
-import mystack
+import math
 
+#Normal graph
 
-def createGraph(V, A):
-    G = dictionary.Dictionary(linkedlist.length(V))
+def createGraph(length, A):
+    G = dictionary.Dictionary(length)
     
     arista = A.head
     
@@ -70,17 +71,16 @@ def createEdge(a1, a2, A):
 
     linkedlist.add(A, edge)
 
-def createVertex(V, length):
-    if V.head != None:
-        return
+def createVertex(length):
+    V = linkedlist.LinkedList()
     for i in range(0, length):
         linkedlist.add(V, i+1)
 
-def existPath(G, v1, v2):
+def existPath(G, v1, v2, type = None):
     visitedNodes = linkedlist.LinkedList()
-    return existPathAux(G, v1, v2, visitedNodes)
+    return existPathAux(G, v1, v2, visitedNodes, type)
 
-def existPathAux(G, v1, v2, visitedNodes):
+def existPathAux(G, v1, v2, visitedNodes, type = None):
     if(v1 > len(G.slots) or v2 > len(G.slots)):
         return False
     
@@ -89,7 +89,7 @@ def existPathAux(G, v1, v2, visitedNodes):
             return False
 
     
-    found = findConnection(G, v1, v2)
+    found = findConnection(G, v1, v2, type)
 
     if found:
         return True
@@ -97,27 +97,34 @@ def existPathAux(G, v1, v2, visitedNodes):
     linkedlist.add(visitedNodes, v1)
 
     node = G.slots[v1 - 1]
-    node = node.head
+    if node != None:
+        node = node.head
 
     while node != None:
-        found = existPathAux(G, node.value, v2, visitedNodes)
+        if type == None:
+            found = existPathAux(G, node.value[1], v2, visitedNodes, type)
+        else:
+            found = existPathAux(G, node.value[1], v2, visitedNodes, type)
         if found:
             return True
         node = node.nextNode
 
     return False
 
-def findConnection(G, v1, v2):
+def findConnection(G, v1, v2, type = None):
     node = G.slots[v1 - 1]
 
     if node == None:
         return False
     
     node = node.head
-
     while node != None:
-        if(node.value == v2):
-            return True
+        if type == None:
+            if(node.value == v2):
+                return True
+        else:
+            if(node.value[1] == v2):
+                return True
         node = node.nextNode
 
     return False
@@ -253,8 +260,25 @@ def DFSVisit(G, slot, visitedNodes, edges, newGraph):
     contador = 0
     DFSVisit(G, son-1, visitedNodes, edges, newGraph)
     DFSVisit(G, newGraph.slots[son-1].head.nextNode.nextNode.value, visitedNodes, edges, newGraph)
-    
+
+def bestRoad(G, v1, v2):
+    if not existPath(G, v1, v2):
+        return None
+    newGraph, _ = convertToBFSTree(G, v1)
+    son = v2 - 1
+    vertexList = linkedlist.LinkedList()
+    while True:
+        father = newGraph.slots[son].head.nextNode.nextNode.value
+        son = father
+        if son == v1 - 1:
+            return vertexList
+        linkedlist.add(vertexList, father + 1)
+
 def printAdjacencyMatrix(G):
+    if(type(G.slots[0].head.value) == type(0)):
+        tipo = None
+    else:
+        tipo = "W"
     print("  ", end="")
     for i in range(0, len(G.slots)):
         print(i + 1, end=" ")
@@ -272,11 +296,20 @@ def printAdjacencyMatrix(G):
         while slot != None or cont != 0:
             if(slot != None):
                 nodo = slot.value
-                while columna < nodo:
+                if(tipo == "W"):
+                    valor = nodo[1]
+                else:
+                    valor = nodo
+                while columna < valor:
                     print(0, end=" ")
                     columna += 1
                     cont -= 1
-                print(1, end=" ")
+                
+                #TEMPORAL
+                if(tipo == "W"):
+                    print(nodo[0], end=" ")
+                else:
+                    print(1, end=" ")
                 slot = slot.nextNode
                 columna += 1
                 cont -= 1
@@ -286,8 +319,199 @@ def printAdjacencyMatrix(G):
             cont -= 1
 
         print("")
+
+#Weighted graph
+
+class weightedEdge:
+    value = None
+    vertex = None
+
+def createWeightedGraph(length, A):
+    G = dictionary.Dictionary(length)
+    
+    arista = A.head
+    
+    while arista != None:
+        addWeightedEdge(arista, G)
+        arista = arista.nextNode
+    
+    return G
+
+def addWeightedEdge(edge, G):
+    edge = edge.value
+    if edge.vertex[0] > len(G.slots) or edge.vertex[1] > len(G.slots):
+        return None
+    
+    slot1 = G.slots[edge.vertex[0] - 1]
+    slot2 = G.slots[edge.vertex[1] - 1]
+
+    slot1Inserted = False
+    slot2Inserted = False
+
+    if(slot1 == None):
+        G.slots[edge.vertex[0] - 1] = linkedlist.LinkedList()
+        G.slots[edge.vertex[0] - 1].head = linkedlist.Node()
+        G.slots[edge.vertex[0] - 1].head.value = algo1.Array(2)
+        G.slots[edge.vertex[0] - 1].head.value[0] = edge.value
+        G.slots[edge.vertex[0] - 1].head.value[1] = edge.vertex[1] 
+        slot1Inserted = True
+    
+    if(slot2 == None):
+        G.slots[edge.vertex[1] - 1] = linkedlist.LinkedList()
+        G.slots[edge.vertex[1] - 1].head = linkedlist.Node()
+        G.slots[edge.vertex[1] - 1].head.value = algo1.Array(2)
+        G.slots[edge.vertex[1] - 1].head.value[0] = edge.value
+        G.slots[edge.vertex[1] - 1].head.value[1] = edge.vertex[0] 
+        slot2Inserted = True
+
+    if(not slot1Inserted):
+        addWeightedEdgeAux(edge.vertex[0], edge.vertex[1], edge.value, G)
+    if(not slot2Inserted):
+        addWeightedEdgeAux(edge.vertex[1], edge.vertex[0], edge.value, G)
+
+    return
+
+def addWeightedEdgeAux(a, b, w, G):
+    currentNode = G.slots[a-1].head
+
+    inserted = False
+    position = 0
+
+    edge = algo1.Array(2)
+    edge[0] = w
+    edge[1] = b
+
+    while not inserted and currentNode != None:
+            if(currentNode.value[1] > b):
+                linkedlist.insert(G.slots[a-1], edge, position)
+                inserted = True
+            else:
+                position += 1
+                currentNode = currentNode.nextNode
+                if currentNode == None:
+                    linkedlist.insert(G.slots[a-1], edge, position)
+
+def createWeightedEdge(A, w, a1, a2):
+    edge = weightedEdge()
+    vertex = algo1.Array(2)
+
+    edge.value = w
+    vertex[0] = a1
+    vertex[1] = a2
+    edge.vertex = vertex
+
+    linkedlist.add(A, edge)
+
+def PRIM(G):
+    visitedNodes = linkedlist.LinkedList()
+    nodesToVisit = linkedlist.LinkedList()
+    lenght = len(G.slots)
+    linkedlist.add(nodesToVisit, 0)
+    linkedlist.add(visitedNodes, 0)
+    
+    newEdges = linkedlist.LinkedList()
+    while linkedlist.length(newEdges) < lenght-1:
+        node = nodesToVisit.head
+        smallestValue = 1/math.tan(math.pi) * -1
+        smallestNode = None
+        while node != None:
+            nodeAux = G.slots[node.value].head
+            while nodeAux != None:
+                if nodeAux.value[0] < smallestValue and linkedlist.search(visitedNodes, nodeAux.value[1] - 1) == None:
+                    smallestNode = nodeAux.value
+                    smallestValue = smallestNode[0]
+                    father = node.value
+                nodeAux = nodeAux.nextNode            
+            node = node.nextNode
+
+        print(smallestNode)
+        print(father + 1)
+        createWeightedEdge(newEdges, smallestNode[0], father + 1, smallestNode[1])
+        linkedlist.add(visitedNodes, smallestNode[1] - 1)
+        linkedlist.add(nodesToVisit, smallestNode[1] - 1)
+
         
+    newGraph = createWeightedGraph(lenght, newEdges)
+    return newGraph
+
+def KRUSKAL(G):
+    nodesToVisit = linkedlist.LinkedList()
+    lenght = len(G.slots)
+    for i in range(lenght):
+        node = G.slots[i].head
+        while node != None:
+            edge = algo1.Array(3)
+            edge[0] = node.value[0]
+            edge[1] = i + 1
+            edge[2] = node.value[1]
+            if nodesToVisit.head == None:
+                linkedlist.add(nodesToVisit, edge)
+            else:
+                position = 0
+                nodeToVisit = nodesToVisit.head
+                while True:
+                    if edge[0] <= nodeToVisit.value[0]:
+                        linkedlist.insert(nodesToVisit, edge, position)
+                        break
+                    else:
+                        position += 1
+                    nodeToVisit = nodeToVisit.nextNode
+                    if nodeToVisit == None:
+                        linkedlist.insert(nodesToVisit, edge, position)
+                        break
+            node = node.nextNode
+
+    linkedlist.printLinkedList(nodesToVisit)
+    newEdges = linkedlist.LinkedList()
+    addedEdges = 0
+    node = nodesToVisit.head
+    while linkedlist.length(newEdges) < lenght-1:
+        if newEdges.head == None:
+            createWeightedEdge(newEdges, node.value[0], node.value[1], node.value[2])
+            addedEdges = 1
+        else:
+            if not existPath(auxGraph, node.value[1], node.value[2], "W"):
+                createWeightedEdge(newEdges, node.value[0], node.value[1], node.value[2])
+                addedEdges += 1
+
+        auxGraph = createWeightedGraph(lenght, newEdges)
+        node = node.nextNode
 
 
+        
+    newGraph = createWeightedGraph(lenght, newEdges)
+    return newGraph
+
+def smallestEdge(E, visitedNodes = linkedlist.LinkedList()):
+    node = E.head
+    smallestValue = 1/math.tan(math.pi) * -1
+    smallestNode = None
+    while node != None:
+        if node.value[0] < smallestValue and linkedlist.search(visitedNodes, node.value[1] - 1) == None:
+            smallestNode = node.value
+            smallestValue = smallestNode[0]
+        node = node.nextNode
+
+    return smallestNode
 
 
+"""
+        if smallestSon != None:
+            createWeightedEdge(newEdges, smallestSon[0], father + 1, smallestSon[1])
+            father = smallestSon[1] - 1
+            linkedlist.add(visitedNodes, father)
+            linkedlist.delete(nodesToVisit, father)
+        else:
+            node = nodesToVisit.head.value
+            son = node
+            node = G.slots[node]
+            smallestFather = smallestEdge(node, nodesToVisit)
+            if smallestFather == None:
+                linkedlist.delete(nodesToVisit, son)
+                linkedlist.insert(nodesToVisit, son, linkedlist.length(nodesToVisit) - 1)
+            else:
+                createWeightedEdge(newEdges, smallestFather[0], smallestFather[1], son + 1)
+                father = smallestFather[1] - 1
+                linkedlist.add(visitedNodes, father)
+                linkedlist.delete(nodesToVisit, father)
+        """
