@@ -515,9 +515,6 @@ def smallestEdge(E, visitedNodes = linkedlist.LinkedList()):
 
 #Directed graph
 
-def graphMatrix(V, A):
-    matriz = algo1.Array(len(V),)
-
 def shortestPath(G, start, end):
     start -= 1
     end -= 1
