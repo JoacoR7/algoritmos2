@@ -62,23 +62,26 @@ A = linkedlist.LinkedList()
 
 graph.createWeightedEdge(A, 3, 1, 2)
 graph.createWeightedEdge(A, 1, 1, 3)
+graph.createWeightedEdge(A, 1, 3, 1)
 graph.createWeightedEdge(A, 2, 1, 4)
 graph.createWeightedEdge(A, 2, 3, 2)
 graph.createWeightedEdge(A, 2, 2, 6)
-graph.createWeightedEdge(A, 2, 5, 6)
+graph.createWeightedEdge(A, 2, 6, 5)
 graph.createWeightedEdge(A, 4, 4, 7)
 #TODO: REVISAR ESTE CASO
 graph.createWeightedEdge(A, 1, 3, 7)
 
 
-G = graph.createWeightedGraph(7, A)
+G = graph.createWeightedGraph(7, A, "D")
 
 graph.printAdjacencyMatrix(G)
 
-a = graph.PRIM(G)
+"""a = graph.PRIM(G)
 
 graph.printAdjacencyMatrix(a)
 
 a = graph.KRUSKAL(G)
 
-graph.printAdjacencyMatrix(a)
+graph.printAdjacencyMatrix(a)"""
+
+graph.shortestPath(G, 1, 5)
